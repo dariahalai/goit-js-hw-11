@@ -1,6 +1,7 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import ApiPhotoService from './fetchPhotos.js'
 import SimpleLightbox from "simplelightbox";
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
 const refs = {
     searchForm : document.getElementById('search-form'),
@@ -10,9 +11,18 @@ const refs = {
 
 let counter = 0;
 const apiPhotoService = new ApiPhotoService();
+const lightbox = new SimpleLightbox('.photo-link',{
+    captionsDelay: 100,
+}
+);
 
 refs.searchForm.addEventListener('submit',onSubmitSearchForm)
-refs.btnLoadMore.addEventListener('click',onLoadMore)
+refs.allPhotos.addEventListener('click',selectGalleryElem);
+function selectGalleryElem(e){
+    e.preventDefault();
+};
+
+
 function onSubmitSearchForm(e){
     e.preventDefault();
     apiPhotoService.query = e.currentTarget.elements.searchQuery.value;
@@ -30,18 +40,22 @@ function onSubmitSearchForm(e){
                 }
                 renderMarkupPhotos(data);
                 Notify.success(`Hooray! We found ${totalHits} images.`);
-                refs.btnLoadMore.hidden = false;
 
             })
         }   
+window.addEventListener('scroll',()=>{
+    const {scrollHeight,scrollTop,clientHeight} = document.documentElement;
+    if(scrollHeight-clientHeight===scrollTop){
+        apiPhotoService.fetchPhoto().then(data =>{  
+            renderMarkupPhotos(data)
+        })
+        counter += data.hits.length;
+    if (counter >= data.totalHits) {     
+      return Notify.failure("We're sorry, but you've reached the end of search results.");
+    };
+    }
+})
 
-function onLoadMore(){
-    apiPhotoService.fetchPhoto().then(data =>{  
-        renderMarkupPhotos(data)
-   
-    })
-}
-  
 function renderMarkupPhotos(data){
     let markup = '';
     markup = data.hits.map(({
@@ -52,8 +66,7 @@ function renderMarkupPhotos(data){
         views,
         comments,
         downloads})=>
-        `<div class="photo-card">
-        <a class="photo-link" href=${largeImageURL}>
+        `<a class="photo-link" href=${largeImageURL}>
         <img class="gallery-image" src="${webformatURL}" alt="${tags}" loading="lazy" width = '300px' />
         <div class="info">
           <p class="info-item">
@@ -74,37 +87,11 @@ function renderMarkupPhotos(data){
           </p>
         </div>
         </a>
-      </div>`).join('')
+        `).join('')
       refs.allPhotos.insertAdjacentHTML('beforeend',markup);
-      hitsCounter(data);
+      lightbox.refresh();
 }
-
-// allPhotos.addEventListener('click',selectGalleryElem);
-
-// function selectGalleryElem(evt){
-//     evt.preventDefault();
-//     if (evt.target.nodeName !== 'IMG'){
-//         return;
-//     }
-//     lightbox.next()
-// };
-// const lightbox = new SimpleLightbox('.gallery .photo-link',{
-//     captionsData: 'alt',
-//     captionsDelay: 250,
-// }
-// );
 
 function clearAll(){
     refs.allPhotos.innerHTML = '';
 }
-
-function hitsCounter(data) {
-    counter += data.hits.length;
-  
-    if (counter >= data.totalHits) {  
-      
-      refs.btnLoadMore.hidden = true;
-  
-      return Notify.failure("We're sorry, but you've reached the end of search results.");
-    };
-  }

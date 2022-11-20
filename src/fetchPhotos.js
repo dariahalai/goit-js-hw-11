@@ -6,7 +6,7 @@ export default class ApiPhotoService{
         this.PER_PAGE = 40;
         this.searchQuery = '';
     }
-    fetchPhoto(){
+     fetchPhoto(){
         const searchParams = new URLSearchParams({
             key:this.KEY,
             q:this.searchQuery,
