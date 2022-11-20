@@ -26,8 +26,9 @@ function selectGalleryElem(e){
 function onSubmitSearchForm(e){
     e.preventDefault();
     apiPhotoService.query = e.currentTarget.elements.searchQuery.value;
-    clearAll();
      if(apiPhotoService.query === ''){
+        clearAll();
+        Notify.failure('Sorry, there are no images matching your search query. Please try again.');
         return;
     }
     apiPhotoService.resetPage();
@@ -35,6 +36,7 @@ function onSubmitSearchForm(e){
         console.log(data)
         const {hits, totalHits} = data;
                 if (hits.length === 0) {
+                clearAll();
                 Notify.failure('Sorry, there are no images matching your search query. Please try again.');
                 return;
                 }
@@ -43,17 +45,26 @@ function onSubmitSearchForm(e){
 
             })
         }   
+
 window.addEventListener('scroll',()=>{
     const {scrollHeight,scrollTop,clientHeight} = document.documentElement;
     if(scrollHeight-clientHeight===scrollTop){
         apiPhotoService.fetchPhoto().then(data =>{  
             renderMarkupPhotos(data)
-        })
+        });
         counter += data.hits.length;
     if (counter >= data.totalHits) {     
       return Notify.failure("We're sorry, but you've reached the end of search results.");
     };
     }
+    const { height: cardHeight } = document
+  .querySelector(".gallery")
+  .firstElementChild.getBoundingClientRect();
+
+window.scrollBy({
+  top: cardHeight * 2,
+  behavior: "smooth",
+});
 })
 
 function renderMarkupPhotos(data){

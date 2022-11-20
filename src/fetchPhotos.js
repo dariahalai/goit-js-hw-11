@@ -1,3 +1,6 @@
+const axios = require('axios').default;
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+
 export default class ApiPhotoService{
     constructor(){
         this.URL = 'https://pixabay.com/api/';
@@ -6,7 +9,7 @@ export default class ApiPhotoService{
         this.PER_PAGE = 40;
         this.searchQuery = '';
     }
-     fetchPhoto(){
+     async fetchPhoto(){
         const searchParams = new URLSearchParams({
             key:this.KEY,
             q:this.searchQuery,
@@ -17,12 +20,15 @@ export default class ApiPhotoService{
             page: this.PAGE
           });
         const newParams = searchParams.toString()
-        return fetch(`${this.URL}?${newParams}`)
-        .then(response => response.json())
-        .then(data =>{
-            this.PAGE += 1;
-            return data;
-        })
+        try{ const response = await axios.get(`${this.URL}?${newParams}`)
+        if (response.status !== 200) {
+            throw new Error(response.status);
+          }
+          this.PAGE += 1;
+          return response.data;
+        } catch (error) {
+         Notify.failure(error.message);
+        }
     }
     resetPage(){
         this.PAGE = 1;
