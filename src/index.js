@@ -26,6 +26,7 @@ function selectGalleryElem(e){
 function onSubmitSearchForm(e){
     e.preventDefault();
     apiPhotoService.query = e.currentTarget.elements.searchQuery.value;
+    clearAll();
      if(apiPhotoService.query === ''){
         clearAll();
         Notify.failure('Sorry, there are no images matching your search query. Please try again.');
@@ -57,14 +58,13 @@ window.addEventListener('scroll',()=>{
       return Notify.failure("We're sorry, but you've reached the end of search results.");
     };
     }
-    const { height: cardHeight } = document
-  .querySelector(".gallery")
-  .firstElementChild.getBoundingClientRect();
+    const { height: cardHeight } = document.querySelector(".gallery")
+    .firstElementChild.getBoundingClientRect();
 
-window.scrollBy({
-  top: cardHeight * 2,
-  behavior: "smooth",
-});
+    window.scrollBy({
+    top: cardHeight * 2,
+    behavior: "smooth",
+    });
 })
 
 function renderMarkupPhotos(data){
