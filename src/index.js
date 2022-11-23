@@ -6,22 +6,57 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 const refs = {
     searchForm : document.getElementById('search-form'),
     allPhotos : document.querySelector('.gallery'),
-    btnLoadMore : document.querySelector('.load-more')
+    btnLoadMore : document.querySelector('.load-more'),
+    guard : document.querySelector('.guard')
 }
 
-let counter = 0;
+let totalPage = 13;
+
 const apiPhotoService = new ApiPhotoService();
+
 const lightbox = new SimpleLightbox('.photo-link',{
     captionsDelay: 100,
 }
 );
 
-refs.searchForm.addEventListener('submit',onSubmitSearchForm)
-refs.allPhotos.addEventListener('click',selectGalleryElem);
-function selectGalleryElem(e){
-    e.preventDefault();
+const params = {
+  root: null,
+  rootMargin: '200px',
+  threshold: 1
 };
 
+function observeObj(entries){
+console.log(entries)
+entries.forEach(entry => {
+  if (entry.isIntersecting) {
+    observer.unobserve(entry.target);
+    apiPhotoService.page += 1;
+    if (entry.intersectionRatio === 1 && apiPhotoService.page === totalPage) {
+      Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.");
+  }
+    apiPhotoService.fetchPhoto().then(data =>{  
+      renderMarkupPhotos(data);
+      const hasPhoto = apiPhotoService.page < totalPage && data.totalHits === 500;
+      if (hasPhoto) {
+        if (data.totalHits < 500) {
+            return;
+        }
+        observer.observe(refs.guard);
+    }
+  })
+}
+})
+};
+
+const observer = new IntersectionObserver(observeObj, params);
+
+refs.searchForm.addEventListener('submit',onSubmitSearchForm)
+refs.allPhotos.addEventListener('click',selectGalleryElem);
+document.addEventListener('scroll',lightScroll)
+
+function selectGalleryElem(e){
+  e.preventDefault();
+};
 
 function onSubmitSearchForm(e){
     e.preventDefault();
@@ -42,30 +77,10 @@ function onSubmitSearchForm(e){
                 return;
                 }
                 renderMarkupPhotos(data);
+                observer.observe(refs.guard);
                 Notify.success(`Hooray! We found ${totalHits} images.`);
-
             })
         }   
-
-window.addEventListener('scroll',()=>{
-    const {scrollHeight,scrollTop,clientHeight} = document.documentElement;
-    if(scrollHeight-clientHeight===scrollTop){
-        apiPhotoService.fetchPhoto().then(data =>{  
-            renderMarkupPhotos(data)
-        });
-        counter += data.hits.length;
-    if (counter >= data.totalHits) {     
-      return Notify.failure("We're sorry, but you've reached the end of search results.");
-    };
-    }
-    const { height: cardHeight } = document.querySelector(".gallery")
-    .firstElementChild.getBoundingClientRect();
-
-    window.scrollBy({
-    top: cardHeight * 2,
-    behavior: "smooth",
-    });
-})
 
 function renderMarkupPhotos(data){
     let markup = '';
@@ -105,4 +120,15 @@ function renderMarkupPhotos(data){
 
 function clearAll(){
     refs.allPhotos.innerHTML = '';
+}
+
+function lightScroll(){
+  const { height: cardHeight } = document
+  .querySelector(".gallery")
+  .firstElementChild.getBoundingClientRect();
+
+window.scrollBy({
+  top: cardHeight * 2,
+  behavior: "smooth",
+});
 }

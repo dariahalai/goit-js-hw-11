@@ -30,6 +30,12 @@ export default class ApiPhotoService{
          Notify.failure(error.message);
         }
     }
+    get page(){
+        return this.PAGE;
+    }
+    set page(newPage){
+        this.PAGE = newPage;
+    }
     resetPage(){
         this.PAGE = 1;
     }
